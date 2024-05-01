@@ -67,25 +67,21 @@ def deEmphasisFilter(data:np.ndarray, fs:int) -> np.ndarray:
     deEmphData = lfilter(bz, az, data)
     return deEmphData
 
-def processAudio(lAudio:np.ndarray, rAudio:np.ndarray) -> tuple:
+def processAudio(audio:np.ndarray) -> np.ndarray:
     """
     Process the FM Audio
 
         Args :
-            lAudio  : Left Audio
-            rAudio  : Right Audio
+            audio   : Audio Signal
         Returns :
-            audio   : [lProcAudio, rProcAudio]
+            audio   : Processes audio signal
     """
     # Remove DC
-    lAudio = lAudio - np.mean(lAudio)
-    rAudio = rAudio - np.mean(rAudio)
+    audio = audio - np.mean(audio)
 
     # Scale
-    lAudio = lAudio / np.max([np.abs(lAudio), np.abs(rAudio)])
-    rAudio = rAudio / np.max([np.abs(lAudio), np.abs(rAudio)])
+    audio = audio / np.max(np.abs(audio))
 
     # Convert to s16.15
-    lAudio = lAudio * 2**15 / 2
-    rAudio = rAudio * 2**15 / 2
-    return [lAudio, rAudio]
+    audio = audio * 2**15 / 2
+    return audio
