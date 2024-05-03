@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 """
 File		: fm_sim_iq.py
 Author		: Hunter Mills
@@ -51,6 +52,11 @@ def main():
 	
 	# Read IQ data
 	iqData = readIQ(args.filename)
+	if args.plot:
+		plt.figure(1)
+		plt.plot(np.abs(np.fft.fftshift(np.fft.fft(iqData))))
+		plt.title('Raw Sample Spectrum')
+		plt.show(block=False)
 
 	# Quadrature Demod of iqData
 	fmData = iqDemod(iqData)
@@ -62,11 +68,11 @@ def main():
 	h 		= firwin(numTaps, cutOff, nyq=args.sampleRate)
 	fmFilt	= np.real(downsampFilter(fmData, h, decFac))
 	if args.plot:
-		plt.figure(1)
+		plt.figure(2)
 		plt.plot(h)
 		plt.title('Time Domain Downsample Filter')
 		plt.show(block=False)
-		plt.figure(2)
+		plt.figure(3)
 		plt.plot(fmFilt)
 		plt.title('L+R Filtered FM Data')
 		plt.show(block=False)
@@ -78,7 +84,7 @@ def main():
 	audioFs 	= args.sampleRate / decFac
 	deEmphData	= deEmphasisFilter(audioData, audioFs)
 	if args.plot:
-		plt.figure(3)
+		plt.figure(4)
 		plt.plot(deEmphData)
 		plt.show(block=False)
 
