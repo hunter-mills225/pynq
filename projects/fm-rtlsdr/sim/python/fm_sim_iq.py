@@ -13,6 +13,8 @@ import numpy as np
 import sounddevice as sd
 import matplotlib.pyplot as plt
 from scipy.signal import firwin
+from .tbWriteData import tbWriteData
+from .cast_unsigned import cast_unsigned
 from ...srcs.python.fmdemod import *
 
 def readIQ(filepath:str) -> np.ndarray:
@@ -48,9 +50,15 @@ def main():
 					 	help='Plotting flag',
 						action='store_true',
 						required=False)
+	parser.add_argument('-w', '--write',
+					 	help='Write HDL TB flag',
+						action='store_true',
+						required=False)
 	args = parser.parse_args()
 	
+	#-------------------------------------
 	# Read IQ data
+	#-------------------------------------
 	iqData = readIQ(args.filename)
 	if args.plot:
 		plt.figure(1)
@@ -58,8 +66,24 @@ def main():
 		plt.title('Raw Sample Spectrum')
 		plt.show(block=False)
 
+	# Write to file for HDL TB
+	# complex s8.7 data type
+	if args.write:
+		sampFixedReal	= np.round(iqData.real * 2**7)
+		sampFixedImag 	= np.round(iqData.imag * 2**7)
+		samplesFixed 	= cast_unsigned(sampFixedReal, 8) + cast_unsigned(sampFixedImag, 8) * 2**8
+		tbWriteData(samplesFixed, 'samples')
+
+	#-------------------------------------
 	# Quadrature Demod of iqData
+	#-------------------------------------
 	fmData = iqDemod(iqData)
+	
+	# Write to file for HDL TB
+	# s16.15 data type
+	if args.write:
+		fmFixed	= cast_unsigned(np.round(iqData.real * 2**15), 16)
+		tbWriteData(fmFixed, 'iqDemod')
 
 	# Filter and decimate
 	decFac	= 6

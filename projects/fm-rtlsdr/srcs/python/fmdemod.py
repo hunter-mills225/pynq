@@ -8,7 +8,7 @@ References  : pysdr.org
 
 # Imports
 import numpy as np
-from scipy.signal import lfilter, hilbert, bilinear
+from scipy.signal import lfilter, bilinear
 
 def iqDemod(data:np.ndarray) -> np.ndarray:
     """
