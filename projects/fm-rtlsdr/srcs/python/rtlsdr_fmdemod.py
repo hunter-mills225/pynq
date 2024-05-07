@@ -18,16 +18,26 @@ from .fmdemod import *
 from rtlsdr import RtlSdr
 from scipy.signal import firwin
 
+# Constants
+SAMPLERATE  = 250000
+DECRATE     = 6
+
 # Queues that are shared between classes
 dataQueue = queue.Queue()
 audioQueue = queue.Queue()
+
+def sdrCallback(samples, sampleRate:int):
+    """
+    Callback function for RTL-SDR to put data into dataQueue
+    """
+    dataQueue.put(np.array(samples, dtype=np.complex64))
 
 class fmDemod(threading.Thread):
     """
     Threaded FM Demodulation Class.
     """
 
-    def setup(self, sampleRate:float, decFac:int):
+    def setup(self):
         """
         Constructor for fmDemod
         
@@ -36,13 +46,13 @@ class fmDemod(threading.Thread):
             decFac      : Decimation factor for audio
         """
         # Args
-        self.sampleRate = sampleRate
-        self.decFac     = decFac
+        self.sampleRate = SAMPLERATE
+        self.decFac     = DECRATE
 
         # fmDemod Constants
         self.numTaps    = 91
         self.cutOff 	= 19000 # Hz
-        self.h 		    = firwin(self.numTaps, self.cutOff, nyq=sampleRate)
+        self.h 		    = firwin(self.numTaps, self.cutOff, nyq=SAMPLERATE)
 
     def run(self):
         """
@@ -78,6 +88,11 @@ class playAudio(threading.Thread):
         """
         Run method for thread
         """
+        # Create Sounddevice output stream
+        audioFs = SAMPLERATE / DECRATE
+        stream = sd.OutputStream(samplerate=audioFs, channels=1, dtype=np.int16)
+        stream.start()
+
         # Loop forever to play audio
         while(1):
             # Grab audio data
@@ -85,8 +100,7 @@ class playAudio(threading.Thread):
             audioQueue.task_done()
 
             # Play Audio
-            sd.play(audioData.astype(np.int16))
-            sd.wait()
+            stream.write(audioData.astype(np.int16))
 
 class exitProg(threading.Thread):
     """
@@ -99,12 +113,6 @@ class exitProg(threading.Thread):
         input('Press key to exit')
         os._exit(1)
 
-def sdrCallback(samples, sampleRate:int):
-    """
-    Callback function for RTL-SDR to put data into dataQueue
-    """
-    dataQueue.put(np.array(samples, dtype=np.complex64))
-
 def main():
     """
 	Function to Demodulate FM radio from RTL-SDR
@@ -115,29 +123,19 @@ def main():
     				 	help='Frequency of RTL-SDR to tune to',
     					type=float,
     					required=True)
-    parser.add_argument('-fs', '--sampleRate',
-    				 	help='Sample frequency of RTL-SDR data',
-    					type=int,
-    					default=250000,
-    					required=False)
-    parser.add_argument('-dec', '--decimation',
-    				 	help='Decimation rate from sampleRate to audioRate (~48kHz)',
-    					type=int,
-                        default=6,
-    					required=False)
     args = parser.parse_args()
 
     # Run threads
     try:
         # Create RTL-SDR object
         sdr = RtlSdr()
-        sdr.sample_rate = args.sampleRate
+        sdr.sample_rate = 250000
         sdr.center_freq = args.freq
         sdr.gain        = 'auto'
 
         # Create objects
         demod = fmDemod()
-        demod.setup(args.sampleRate, args.decimation)
+        demod.setup()
         audio = playAudio()
         exitp = exitProg()
 
@@ -147,7 +145,7 @@ def main():
         exitp.start()
 
         # Read Samples from RTL-SDR
-        sdr.read_samples_async(sdrCallback, args.sampleRate)
+        sdr.read_samples_async(sdrCallback, SAMPLERATE)
     
     except ValueError:
         print('ERROR')
