@@ -12,7 +12,7 @@
 #include <unordered_map>
 
 class modem {
-    private:
+    public:
         int bits_per_symbol;
         std::unordered_map<int, std::complex<double>> cosnstellation;
         std::vector<uint8_t> message;
@@ -29,6 +29,8 @@ class modem {
 };
 
 class psk : public modem {
+    private:
+        std::vector<int> valid_bps = {1, 2, 3, 4};
     public:
         psk(int bits_per_symbol);
 };
@@ -36,4 +38,5 @@ class psk : public modem {
 class qam : public modem {
     public:
         qam(int bits_per_symbol);
+        void print_const();
 };
