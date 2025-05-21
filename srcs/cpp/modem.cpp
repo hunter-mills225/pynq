@@ -30,9 +30,9 @@ void modem::modulate() {
     std::vector<uint8_t> message_bps;
     if (8 % bits_per_symbol == int(8 % bits_per_symbol)) {
         for (int i = 0; i < message.size(); i++) {
-            for (int j = 0; i < 8 % bits_per_symbol; i++) {
-                shift_value = 8 - bits_per_symbol*(i+1);
-                masked_data = message[i] & (mask << (shift_value)) >> shift_value;
+            for (int j = 0; j < (int)(8 / bits_per_symbol); j++) {
+                shift_value = 8 - bits_per_symbol*(j+1);
+                masked_data = (message[i] & (mask << (shift_value))) >> shift_value;
                 message_bps.push_back(masked_data);
             }
         }
@@ -69,17 +69,16 @@ qam::qam(int bps) {
     }
 
     // Local parameters
-    int m = pow(2, bps);
-    std::unordered_map<int, std::complex<double>> constel;
-    std::vector<double> n = linspace(-sqrt(2)/2, sqrt(2)/2, m);
+    std::unordered_map<int, std::complex<double> > constel;
+    std::vector<double> n = linspace(-sqrt(2)/2, sqrt(2)/2, bps);
     std::vector<int> gray_code = gen_gray_code(bps);
     int idx = 0;
 
     // Create constellation
-    for (int i = 0; i < m; i++) {
-        for (int j = 0; j < m; j++) {
-            std::complex<double> const_point(n[i], n[j]);
-            idx = gray_code[i+j];
+    for (int i = 0; i < bps; i++) {
+        for (int j = 0; j < bps; j++) {
+            std::complex<double> const_point(n[j], n[i]);
+            idx = gray_code[i*bps+j];
             constel.insert({idx, const_point});
         }
     }
@@ -87,17 +86,6 @@ qam::qam(int bps) {
     // Set the constellation in modem parent class
     set_const(constel);
     set_bps(bps);
-}
-
-/**
- * QAM print_const
- * Function to print the constellation to std_out.
- */
-void qam::print_const() {
-    for (int i = 0; i < modem::bits_per_symbol; i++) {
-        std::cout << modem::cosnstellation[i] << "\t" << modem::cosnstellation[i] << "\t";
-        std::cout << modem::cosnstellation[i] << "\t" << modem::cosnstellation[i] << std::endl;
-    }
 }
 
 /******************************************************************************
@@ -118,14 +106,14 @@ psk::psk(int bps) {
 
     if (valid) {
         // Local parameters
-        std::unordered_map<int, std::complex<double>> constel;
+        std::unordered_map<int, std::complex<double> > constel;
 
         // Create constellation
         if (bps == 1) {
-            std::complex<double> const_point(-1, 0);
-            constel.insert({0, const_point});
-            std::complex<double> const_point(1, 0);
-            constel.insert({1, const_point});
+            std::complex<double> const_point0(-1, 0);
+            constel.insert({0, const_point0});
+            std::complex<double> const_point1(1, 0);
+            constel.insert({1, const_point1});
         }
         else {
             std::vector<double> n = arange(0, 2*M_PI, 2*M_PI/pow(2, bps));

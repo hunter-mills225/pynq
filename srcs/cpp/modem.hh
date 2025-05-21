@@ -14,14 +14,14 @@
 class modem {
     public:
         int bits_per_symbol;
-        std::unordered_map<int, std::complex<double>> cosnstellation;
+        std::unordered_map<int, std::complex<double> > cosnstellation;
         std::vector<uint8_t> message;
-        std::vector<std::complex<double>> symbols;
+        std::vector<std::complex<double> > symbols;
         std::vector<uint8_t> message_bytes;
         std::vector<uint8_t> demod_bytes;
     public:
         modem() = default;
-        void set_const(std::unordered_map<int, std::complex<double>> c) {cosnstellation = c;}
+        void set_const(std::unordered_map<int, std::complex<double> > c) {cosnstellation = c;}
         void set_message(std::vector<uint8_t> m) {message = m;}
         void set_bps(int bps) {bits_per_symbol = bps;}
         void modulate();

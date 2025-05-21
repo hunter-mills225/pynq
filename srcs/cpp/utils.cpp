@@ -50,13 +50,14 @@ std::vector<double> arange(double start, double stop, double step) {
  */
 std::vector<int> gen_gray_code(int n) {
     // Local variables
+    std::vector<int> temp_code;
     std::vector<int> gray_code;
     int i = 0;
     int j = 0;
 
     // Base case
     if (n <= 0)
-        return;
+        return gray_code;
 
     // str_arr will store all generated codes
     std::vector<std::string> str_arr;
@@ -83,7 +84,21 @@ std::vector<int> gen_gray_code(int n) {
 
     // Create constellation
     for (int i = 0; i < str_arr.size(); i++) {
-        gray_code.push_back(std::stoi(str_arr[i], nullptr, 2));
+        temp_code.push_back(std::stoi(str_arr[i], nullptr, 2));
+    }
+
+    // Swap the indexes of odd rows
+    for (int i = 0; i < n; i++) {
+        if (i % 2 == 0) {
+            for (int j = 0; j < n; j++) {
+                gray_code.push_back(temp_code[i*n + j]);
+            }
+        }
+        else {
+            for (int j = 0; j < n; j++) {
+                gray_code.push_back(temp_code[(i+1)*n - j - 1]);
+            }
+        }
     }
     return gray_code;
 }
